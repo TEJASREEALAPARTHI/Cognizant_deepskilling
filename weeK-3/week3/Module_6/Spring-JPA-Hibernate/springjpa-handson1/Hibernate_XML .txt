@@ -1,0 +1,305 @@
+1. Hibernate Architecture
+Java Application
+       │
+       ▼
+   SessionFactory
+       │
+       ▼
+     Session
+       │
+       ▼
+  Transaction
+       │
+       ▼
+ Hibernate ORM
+       │
+       ▼
+    MySQL Database
+2. Hibernate XML Configuration
+
+Hibernate uses two XML files:
+
+(a) hibernate.cfg.xml
+
+This file contains the database connection details.
+
+Example:
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE hibernate-configuration PUBLIC
+"-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+
+<session-factory>
+
+    <property name="hibernate.connection.driver_class">
+        com.mysql.cj.jdbc.Driver
+    </property>
+
+    <property name="hibernate.connection.url">
+        jdbc:mysql://localhost:3306/ormlearn
+    </property>
+
+    <property name="hibernate.connection.username">
+        root
+    </property>
+
+    <property name="hibernate.connection.password">
+        root
+    </property>
+
+    <property name="hibernate.dialect">
+        org.hibernate.dialect.MySQLDialect
+    </property>
+
+    <mapping resource="Country.hbm.xml"/>
+
+</session-factory>
+
+</hibernate-configuration>
+(b) Country.hbm.xml
+
+This file maps the Java object to the database table.
+
+<class name="Country" table="country">
+
+    <id name="code" column="code">
+        <generator class="assigned"/>
+    </id>
+
+    <property name="name" column="name"/>
+
+</class>
+Object-Relational Mapping
+Java Class	Database
+Country	country
+code	code
+name	name
+
+Hibernate converts Java objects into database rows automatically.
+
+3. SessionFactory
+Definition
+
+A SessionFactory is a factory that creates Session objects.
+
+SessionFactory factory =
+new Configuration()
+.configure("hibernate.cfg.xml")
+.buildSessionFactory();
+Responsibilities
+Reads hibernate.cfg.xml
+Creates database connection settings
+Creates Session objects
+Created only once for an application
+
+Think of it as:
+
+SessionFactory
+      │
+      ├── Session 1
+      ├── Session 2
+      ├── Session 3
+4. Session
+
+A Session represents one connection with the database.
+
+Session session =
+factory.openSession();
+
+Using Session you can:
+
+Save
+Update
+Delete
+Fetch
+
+Think of Session as:
+
+Java Program
+      │
+      ▼
+ Session
+      │
+      ▼
+ Database
+5. Transaction
+
+A transaction is a group of database operations executed as a single unit.
+
+Transaction tx =
+session.beginTransaction();
+
+Example
+
+Insert Employee
+
+Insert Department
+
+Update Salary
+
+If one operation fails,
+
+everything rolls back.
+
+6. beginTransaction()
+
+Starts a database transaction.
+
+Transaction tx =
+session.beginTransaction();
+
+Nothing is permanently saved until commit().
+
+7. commit()
+
+Commits the transaction.
+
+tx.commit();
+
+Example
+
+Before commit
+
+Database
+
+Employee
+-------
+(No record)
+
+After commit
+
+Employee
+
+101 John
+
+Changes become permanent.
+
+8. rollback()
+
+Used when something goes wrong.
+
+tx.rollback();
+
+Example
+
+Insert Employee
+
+Insert Salary
+
+Exception
+
+Rollback removes all changes.
+
+Database remains unchanged.
+
+9. session.save()
+
+Used to insert a new record.
+
+Country country = new Country();
+
+country.setCode("JP");
+
+country.setName("Japan");
+
+session.save(country);
+
+Generated SQL
+
+insert into country values('JP','Japan');
+10. session.createQuery().list()
+
+Used to fetch multiple records.
+
+List<Country> countries =
+session.createQuery("from Country").list();
+
+Equivalent SQL
+
+select * from country;
+
+Returns
+
+[
+India,
+USA,
+Japan
+]
+11. session.get()
+
+Fetches one record using the primary key.
+
+Country country =
+session.get(Country.class,"IN");
+
+Equivalent SQL
+
+select * from country
+where code='IN';
+
+Returns
+
+Country
+
+code = IN
+
+name = India
+12. session.delete()
+
+Deletes an object.
+
+Country country =
+session.get(Country.class,"JP");
+
+session.delete(country);
+
+Equivalent SQL
+
+delete from country
+where code='JP';
+Complete Hibernate Flow
+Start Program
+      │
+      ▼
+Create SessionFactory
+      │
+      ▼
+Open Session
+      │
+      ▼
+Begin Transaction
+      │
+      ▼
+save()/get()/delete()/createQuery()
+      │
+      ▼
+commit()
+      │
+      ▼
+Close Session
+      │
+      ▼
+Close SessionFactory
+Interview Questions
+What is Hibernate?
+
+Hibernate is an Object Relational Mapping (ORM) framework that maps Java objects to database tables and eliminates the need to write most SQL manually.
+
+Difference between SessionFactory and Session?
+SessionFactory	Session
+Heavyweight	Lightweight
+Created once	Created many times
+Thread-safe	Not thread-safe
+Creates Session objects	Performs CRUD operations
+Why use Transactions?
+
+Transactions ensure ACID properties. If any operation fails, all changes are rolled back to keep the database consistent.
+
+Difference between session.get() and session.createQuery().list()?
+session.get()	session.createQuery().list()
+Retrieves a single object by primary key	Retrieves multiple objects using an HQL query
+Returns one entity or null	Returns a List of entities
